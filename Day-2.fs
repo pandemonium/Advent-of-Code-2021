@@ -9,24 +9,26 @@ type Move = Forward of int
 
 and Position =
   { Depth      : int
-    Horizontal : int }
+    Horizontal : int
+    Aim        : int }
 
 
 module Position =
   let intial =
-    { Horizontal = 0; Depth = 0 }
+    { Horizontal = 0; Depth = 0; Aim = 0 }
 
   let product { Horizontal = h; Depth = d } =
     h * d
 
   let forward x pos =
-    { pos with Horizontal = pos.Horizontal + x }
+    { pos with Horizontal = pos.Horizontal + x 
+               Depth      = pos.Depth + pos.Aim * x }
 
   let up x pos =
-    { pos with Depth = pos.Depth - x }
+    { pos with Aim = pos.Aim - x }
 
   let down x pos =
-    { pos with Depth = pos.Depth + x }
+    { pos with Aim = pos.Aim + x }
 
 
 module Move =
@@ -54,6 +56,7 @@ module Submarine =
     |> Position.product
 
 let compute =
+//  Submarine.test
   IO.File.ReadLines "input-2.txt"
   |> List.ofSeq
   |> Submarine.travel
