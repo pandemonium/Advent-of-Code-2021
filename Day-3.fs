@@ -2,6 +2,7 @@ module AdventOfCode.Day3
 
 open System
 
+
 let input =
   IO.File.ReadLines "input-3.txt"
   |> List.ofSeq
