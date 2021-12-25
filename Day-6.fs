@@ -1,31 +1,39 @@
 module AdventOfCode.Day6
 
 open System
+open System.Numerics
+open System.Collections.Specialized
 
-type School = Fesh list
 
-and Fesh = int
-
-module Fesh =
-  let spawnAndReset = [ 6; 8 ]
-  let live x        = [ x - 1 ]
+type School = int64 array
 
 module School =
+  let empty () = Array.create 9 0L
+
+  let fromInitial =
+    List.countBy id
+    >> List.fold (fun (a : School) (k, v) -> a.[k] <- v; a) (empty ())
+
   let parse (input : string) : School =
     input.Split [|','|]
     |> List.ofArray
     |> List.map int
+    |> fromInitial
 
 module Simulation =
-  let tick : School -> School =
-    function age when age = 0 -> Fesh.spawnAndReset
-           | age              -> Fesh.live age
-    |> List.collect
+  let tick (ages : School) : School =
+    let toSpawn = ages.[0]
+    let ages' = School.empty ()
+    Array.ConstrainedCopy (ages, 1, ages', 0, ages.Length - 1)
 
-  let run days school : int =
+    ages'.[6] <- ages'.[6] + toSpawn
+    ages'.[8] <- toSpawn
+    ages'
+
+  let run days school : int64 =
     [ 1..days ]
     |> List.fold (fun s _ -> tick s) school
-    |> List.length
+    |> Array.sum
 
 module Test =
   let input = 
@@ -35,7 +43,13 @@ module Live =
   let input =
     IO.File.ReadAllText "input-6.txt"
 
-let compute = 
+let compute simulations =
   Live.input
   |> School.parse
-  |> Simulation.run 80
+  |> Simulation.run simulations
+
+let compute1 =
+  compute 80
+
+let compute2 =
+  compute 256
