@@ -8,7 +8,7 @@ and Fesh = int
 
 module Fesh =
   let spawnAndReset = [ 6; 8 ]
-  let live x         = [ x - 1 ]
+  let live x        = [ x - 1 ]
 
 module School =
   let parse (input : string) : School =
@@ -17,11 +17,10 @@ module School =
     |> List.map int
 
 module Simulation =
-  let tick (school : School) : School =
-    let fesh =
-      function age when age = 0 -> Fesh.spawnAndReset
-             | age              -> Fesh.live age
-    in List.collect fesh school
+  let tick : School -> School =
+    function age when age = 0 -> Fesh.spawnAndReset
+           | age              -> Fesh.live age
+    |> List.collect
 
   let run days school : int =
     [ 1..days ]
