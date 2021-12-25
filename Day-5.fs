@@ -17,7 +17,7 @@ module Image =
 
   let coveredPoints (line : Line) : Point list =
     let range r s =
-      [ min r s .. max r s ]
+      if r > s then [ r .. -1 .. s ] else [ r .. s ]
 
     let vertical p q =
       [ for i in range p.Y q.Y do yield { X = p.X; Y = i } ]
@@ -25,17 +25,21 @@ module Image =
     let horizontal p q =
       [ for i in range p.X q.X do yield { X = i; Y = p.Y } ]
 
+    let diagonal p q =
+      let xs = List.zip <| range p.X q.X
+                        <| range p.Y q.Y
+      in List.map (fun (x, y) -> { X = x; Y = y }) xs
+
     match line with
     | { P = p; Q = q } when p.X = q.X -> vertical p q
     | { P = p; Q = q } when p.Y = q.Y -> horizontal p q
-    | otherwise -> []
+    | { P = p; Q = q }                -> diagonal p q
 
-  let overlaps (lines : Line list) =
-    lines
-    |> List.collect coveredPoints
-    |> List.countBy id
-    |> List.choose (snd >> function x when x >= 2 -> Some x | _ -> None)
-    |> List.length
+  let overlaps =
+    List.collect coveredPoints
+    >> List.countBy id
+    >> List.choose (snd >> function x when x >= 2 -> Some x | _ -> None)
+    >> List.length
 
 
 module Parse =
