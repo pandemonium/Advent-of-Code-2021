@@ -7,6 +7,7 @@ type BingoSystem =
   { Input  : int list
     Number : int
     Boards : Board list
+    Streak : int list
     Winner : Board option }
 
 and Board =
@@ -53,9 +54,10 @@ module BingoSystem =
     { Input  = List.tail numbers
       Number = List.head numbers
       Boards = boards
+      Streak = []
       Winner = None }
 
-  let parseInput (data : string list) : BingoSystem =
+  let decode (input : string list) : BingoSystem =
     let parseNumbers (text : string) : int list =
       text.Split ','
       |> Array.map int
@@ -73,7 +75,7 @@ module BingoSystem =
       in List.chunkBySize 6
          >> List.map (List.tail >> parseBoard)
 
-    match data with
+    match input with
     | numbers::boards -> 
       make <| parseNumbers numbers
            <| parseBoards boards
@@ -86,23 +88,45 @@ module BingoSystem =
     { system with Number = List.head system.Input
                   Input  = List.tail system.Input }
 
-  let findWinner system : Board option =
+  let findFirstWinner system : Board option =
     List.tryFind Board.hasBingo system.Boards
 
-  let rec play system =
-    let system' =
-      system
-      |> markBoards
+  let rec playUntilOneWinner before =
+    let after = markBoards before
 
-    match findWinner system' with
-    | Some winner -> { system' with Winner = Some winner }
-    | None        -> system' |> drawNumber |> play
+    match findFirstWinner after with
+    | Some winner -> { after with Winner = Some winner }
+    | None        -> after |> drawNumber |> playUntilOneWinner
+
+  let bingoIndices =
+    List.indexed
+    >> List.filter (snd >> Board.hasBingo)
+    >> List.map fst
+
+  let rec playUntilAllWinners before : BingoSystem =
+    let after = markBoards before
+    let diff = 
+      List.except <| bingoIndices before.Boards
+                  <| bingoIndices after.Boards
+    let streak = after.Streak @ diff
+
+    if List.length streak = List.length after.Boards
+      then { after with Streak = streak
+                        Winner = List.last streak
+                                 |> fun ix -> after.Boards.[ix]
+                                 |> Some }
+      else { after with Streak = streak }
+           |> drawNumber
+           |> playUntilAllWinners
 
   let score system =
     Option.map (Board.score system.Number) system.Winner
 
-  let game =
-    parseInput >> play >> score
+  let gameUntilFirst =
+    decode >> playUntilOneWinner >> score
+
+  let gameUntilLast =
+    decode >> playUntilAllWinners >> score
 
 
 module Test =
@@ -114,6 +138,10 @@ module Live =
     IO.File.ReadLines "input-4.txt"
     |> List.ofSeq
 
-let compute =
+let compute1 =
   Live.input
-  |> BingoSystem.game
+  |> BingoSystem.gameUntilFirst
+
+let compute2 =
+  Live.input
+  |> BingoSystem.gameUntilLast
