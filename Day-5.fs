@@ -15,28 +15,31 @@ type Image = Map<Point, int>
 module Image =
   let empty : Image = Map.empty
 
-  let coveredPoints (line : Line) : Point list =
-    let range r s =
-      if r > s then [ r .. -1 .. s ] else [ r .. s ]
+  let range r s =
+    if r > s then [ r .. -1 .. s ] else [ r .. s ]
 
+  let coverDiagonals p q =
+    let xs = List.zip <| range p.X q.X
+                      <| range p.Y q.Y
+    in List.map (fun (x, y) -> { X = x; Y = y }) xs
+
+  let ignoreDiagonals p q =
+    []
+
+  let coveredPoints diagonals (line : Line) : Point list =
     let vertical p q =
       [ for i in range p.Y q.Y do yield { X = p.X; Y = i } ]
 
     let horizontal p q =
       [ for i in range p.X q.X do yield { X = i; Y = p.Y } ]
 
-    let diagonal p q =
-      let xs = List.zip <| range p.X q.X
-                        <| range p.Y q.Y
-      in List.map (fun (x, y) -> { X = x; Y = y }) xs
-
     match line with
     | { P = p; Q = q } when p.X = q.X -> vertical p q
     | { P = p; Q = q } when p.Y = q.Y -> horizontal p q
-    | { P = p; Q = q }                -> diagonal p q
+    | { P = p; Q = q }                -> diagonals p q
 
-  let overlaps =
-    List.collect coveredPoints
+  let overlaps diagonals =
+    List.collect (coveredPoints diagonals)
     >> List.countBy id
     >> List.choose (snd >> function x when x >= 2 -> Some x | _ -> None)
     >> List.length
@@ -74,7 +77,13 @@ module Live =
     IO.File.ReadLines "input-5.txt"
     |> List.ofSeq
 
-let compute =
+let compute diagonals =
   Live.input
   |> Parse.lines
-  |> Image.overlaps
+  |> Image.overlaps diagonals
+
+let compute1 =
+  compute Image.ignoreDiagonals
+
+let compute2 =
+  compute Image.coverDiagonals
