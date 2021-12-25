@@ -13,3 +13,5 @@ printfn "Day 4/ 2 %A" Day4.compute2
 
 printfn "Day 5/ 1 %A" Day5.compute1
 printfn "Day 5/ 2 %A" Day5.compute2
+
+printfn "Day 6/ 1 %A" Day6.compute
