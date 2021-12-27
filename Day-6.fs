@@ -1,8 +1,6 @@
 module AdventOfCode.Day6
 
 open System
-open System.Numerics
-open System.Collections.Specialized
 
 
 type School = int64 array
